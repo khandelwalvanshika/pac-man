@@ -3,26 +3,31 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 // "#" = wall, "." = open path. Border is fully enclosed.
+// Generated as a spanning-tree maze with extra loops carved in, then
+// verified so every open cell is reachable from START (no sealed-off
+// rooms like the old nested-rectangle layout had).
 const MAZE = [
-  "###############",
-  "#.............#",
-  "#.###.###.###.#",
-  "#.#.........#.#",
-  "#.#.#######.#.#",
-  "#.#.#.....#.#.#",
-  "#...#.....#...#",
-  "#.#.#.....#.#.#",
-  "#.#.#######.#.#",
-  "#.#.........#.#",
-  "#.###.###.###.#",
-  "#.............#",
-  "###############",
+  "###################",
+  "#.........#.......#",
+  "#.#.#.#.#.#.#####.#",
+  "#.#.#...#.#.....#.#",
+  "#.#.#.#.#.#.#.###.#",
+  "#...#.#.....#.#...#",
+  "#.#.###.#####.#.#.#",
+  "#.....#.........#.#",
+  "#.#.#.#.###.#.#.#.#",
+  "#...#...........#.#",
+  "#.#.#.###.#####.#.#",
+  "#.#.#...#.....#.#.#",
+  "#.#.#.#.###.#.#.#.#",
+  "#.#.........#...#.#",
+  "###################",
 ];
 
 const ROWS = MAZE.length;
 const COLS = MAZE[0].length;
 const START = { row: 1, col: 1 };
-const GHOST_START = { row: 11, col: 13 };
+const GHOST_START = { row: 13, col: 17 };
 const GHOST_MOVE_INTERVAL_MS = 450;
 const MAX_CANVAS_WIDTH = 560;
 

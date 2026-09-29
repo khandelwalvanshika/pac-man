@@ -31,6 +31,22 @@ function isWall(row: number, col: number) {
   return MAZE[row][col] === "#";
 }
 
+function dotKey(row: number, col: number) {
+  return `${row},${col}`;
+}
+
+function buildInitialDots() {
+  const dots = new Set<string>();
+  for (let row = 0; row < ROWS; row++) {
+    for (let col = 0; col < COLS; col++) {
+      if (MAZE[row][col] === "." && !(row === START.row && col === START.col)) {
+        dots.add(dotKey(row, col));
+      }
+    }
+  }
+  return dots;
+}
+
 const KEY_DELTAS: Record<string, { dRow: number; dCol: number }> = {
   ArrowUp: { dRow: -1, dCol: 0 },
   ArrowDown: { dRow: 1, dCol: 0 },
@@ -42,7 +58,10 @@ export default function PacManGame() {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const playerRef = useRef<Cell>(START);
+  const dotsRef = useRef<Set<string>>(buildInitialDots());
   const [player, setPlayer] = useState<Cell>(START);
+  const [dots, setDots] = useState<Set<string>>(() => buildInitialDots());
+  const [score, setScore] = useState(0);
   const [canvasWidth, setCanvasWidth] = useState(MAX_CANVAS_WIDTH);
 
   useEffect(() => {
@@ -50,6 +69,7 @@ export default function PacManGame() {
   }, [player]);
 
   // Move the player one cell at a time with the arrow keys, blocked by walls.
+  // Moving onto a dot removes it and increases the score.
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       const delta = KEY_DELTAS[e.key];
@@ -62,6 +82,15 @@ export default function PacManGame() {
         const next = { row: nextRow, col: nextCol };
         playerRef.current = next;
         setPlayer(next);
+
+        const key = dotKey(nextRow, nextCol);
+        if (dotsRef.current.has(key)) {
+          const updatedDots = new Set(dotsRef.current);
+          updatedDots.delete(key);
+          dotsRef.current = updatedDots;
+          setDots(updatedDots);
+          setScore((s) => s + 1);
+        }
       }
     }
     window.addEventListener("keydown", handleKeyDown);
@@ -110,16 +139,29 @@ export default function PacManGame() {
       }
     }
 
+    ctx.fillStyle = "#fef9c3";
+    dots.forEach((key) => {
+      const [row, col] = key.split(",").map(Number);
+      const cx = col * cellSize + cellSize / 2;
+      const cy = row * cellSize + cellSize / 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, cellSize * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
     ctx.fillStyle = "#facc15";
     ctx.beginPath();
     const centerX = player.col * cellSize + cellSize / 2;
     const centerY = player.row * cellSize + cellSize / 2;
     ctx.arc(centerX, centerY, cellSize * 0.4, 0, Math.PI * 2);
     ctx.fill();
-  }, [player, canvasWidth]);
+  }, [player, dots, canvasWidth]);
 
   return (
     <div ref={containerRef} className="w-full max-w-xl">
+      <p className="mb-3 text-center text-lg font-semibold text-yellow-100">
+        Score: {score}
+      </p>
       <canvas
         ref={canvasRef}
         className="mx-auto block rounded-lg border-4 border-blue-900"
